@@ -1,0 +1,57 @@
+import { SlashCommandBuilder } from "discord.js";
+import axios from "axios";
+
+export const command = {
+  data: new SlashCommandBuilder()
+    .setName("binduser")
+    .setDescription("Bind a Discord user to a Pterodactyl account via email")
+    .addUserOption(opt =>
+      opt.setName("discorduser")
+        .setDescription("Discord user to bind")
+        .setRequired(true))
+    .addStringOption(opt =>
+      opt.setName("email")
+        .setDescription("Email of the Pterodactyl account")
+        .setRequired(true)),
+
+  async execute(interaction) {
+    const host = process.env.PTERO_HOST;
+    const apiKey = process.env.PTERO_API_KEY;
+
+    const discordUser = interaction.options.getUser("discorduser");
+    const email = interaction.options.getString("email");
+
+    if (!host || !apiKey) {
+      return interaction.reply("⚠️ Pterodactyl host or API key not configured.");
+    }
+
+    try {
+      // Step 1: Find Pterodactyl user by email
+      const usersRes = await axios.get(`${host}/api/application/users`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+
+      const users = usersRes.data.data;
+      const foundUser = users.find((u: any) => u.attributes.email === email);
+
+      if (!foundUser) {
+        return interaction.reply(`❌ No Pterodactyl user found with email: ${email}`);
+      }
+
+      const pteroUserId = foundUser.attributes.id;
+
+      // Step 2: Confirm binding
+      await interaction.reply(
+        `✅ Bound ${discordUser} to Pterodactyl user ID ${pteroUserId} (${email})`
+      );
+
+      // Step 3: DM the Discord user
+      await discordUser.send(
+        `🔗 You have been bound to Pterodactyl account:\nEmail: ${email}\nUser ID: ${pteroUserId}`
+      );
+    } catch (error: any) {
+      console.error(error.response?.data || error.message);
+      await interaction.reply("❌ Failed to bind user. Check console for details.");
+    }
+  },
+};
