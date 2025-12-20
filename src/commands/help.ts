@@ -417,7 +417,14 @@ function getCommandDetailedInfo(commandName: string): { usage?: string; notes?: 
       notes: 'Shows bot latency, uptime, and system information.'
     }
   };
-  
+
+  const customCommands = [
+  { cmd: "!createuser <username> <email> <firstName> <lastName>", desc: "Create a new Pterodactyl user", admin: true },
+  { cmd: "!createserver <serverName> <userId>", desc: "Create a new Pterodactyl server interactively", admin: true },
+  { cmd: "/binduser discorduser:@User email:<email>", desc: "Bind a Discord user to a Pterodactyl account", admin: true },
+];
+
+
   return details[commandName] || {};
 }
 
