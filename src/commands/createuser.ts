@@ -26,6 +26,10 @@ export default {
     }
 
     try {
+      // Generate random password
+      const password = Math.random().toString(36).slice(-10);
+
+      // Create user via Pterodactyl API
       const response = await axios.post(
         `${host}/api/application/users`,
         {
@@ -33,7 +37,7 @@ export default {
           email,
           first_name: firstName,
           last_name: lastName,
-          password: Math.random().toString(36).slice(-10), // auto‑generate password
+          password,
         },
         {
           headers: {
@@ -43,7 +47,13 @@ export default {
         }
       );
 
-      message.reply(`✅ User created successfully! ID: ${response.data.attributes.id}`);
+      // Confirm in channel
+      await message.reply(`✅ User created successfully! ID: ${response.data.attributes.id}`);
+
+      // Send password in DM
+      await message.author.send(
+        `🔑 User created:\nUsername: ${username}\nEmail: ${email}\nPassword: ${password}`
+      );
     } catch (error: any) {
       console.error(error.response?.data || error.message);
       message.reply("❌ Failed to create user. Check console for details.");
